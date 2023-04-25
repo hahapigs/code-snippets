@@ -4,6 +4,7 @@
 
 项目结构
 
+``` powershell
 └── resources
     ├── META-INF
     ├── application.yml
@@ -17,6 +18,7 @@
     ├── logback-spring.xml
     └── mapper
         └── Test-mapper.xml
+```
 
 以读取 resource 中的 xxx-key.pub 中的公钥为需求，或者读取磁盘绝对路径中的公钥
 
