@@ -24,10 +24,10 @@ import java.util.TimeZone;
 @MapperScan("org.xxx.**.dao")
 @EnableAsync
 @EnableScheduling
-public class DwtAdminApplication {
+public class xxxAdminApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DwtAdminApplication.class, args);
+        SpringApplication.run(xxxAdminApplication.class, args);
     }
 
     /**
@@ -44,7 +44,7 @@ MyTask.java
 
 ``` java
 import lombok.extern.slf4j.Slf4j;
-import org.dwt.admin.service.SyncService;
+import org.xxx.admin.service.SyncService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -119,35 +119,39 @@ http://cron.qqe2.com/
 mysql
 
 ``` mysql
+-- 删除旧表
 DROP TABLE `task_base` if EXISTS;
+-- 创建新表
 CREATE TABLE `task_base` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '名称',
   `name_en` varchar(200) DEFAULT NULL COMMENT '名称（英文）',
   `description` varchar(200) DEFAULT NULL COMMENT '描述',
-  `corn_expression` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '表达式',
-  `class_name` varchar(200) DEFAULT NULL COMMENT '类名',
-  `method_name` varchar(200) DEFAULT NULL COMMENT '方法名',
+  `corn_expression` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '表达式',
+  `class_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类名',
+  `method_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '方法名',
   `method_params` varchar(200) DEFAULT NULL COMMENT '方法参数',
-  `is_disabled` bigint(20) DEFAULT '0' COMMENT '是否禁用, 0:否 1:是',
+  `is_disabled` bigint DEFAULT '0' COMMENT '是否禁用, 0:否 1:是',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  `is_deleted` tinyint(4) DEFAULT '0' COMMENT '是否删除 0:否 1:是',
+  `is_deleted` tinyint DEFAULT '0' COMMENT '是否删除 0:否 1:是',
   PRIMARY KEY (`id`),
   UNIQUE KEY `udx_multi_1` (`name`,`is_deleted`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务';
 
+-- 插入数据
 INSERT INTO `task_base` (`id`, `name`, `name_en`, `description`, `corn_expression`, `class_name`, `method_name`, `method_params`, `is_disabled`, `create_time`, `update_time`, `is_deleted`) VALUES
-(1, '更新广告主配额', '', '每1分钟一次', '0 * * * * ?', 'org.xxx.admin.service.impl.XxxServiceImpl', 'test1', '', 0, '2023-05-04 08:26:08', '2023-05-12 08:10:09', 0),
+(1, '更新数据', '', '每1分钟一次', '0 * * * * ?', 'org.xxx.admin.service.impl.XxxServiceImpl', 'test1', '', 0, '2023-05-04 08:26:08', '2023-05-12 08:10:09', 0),
 (2, 'test', NULL, '每10分钟一次', '0 0/10 * * * ? ', 'org.xxx.admin.service.impl.XxxServiceImpl', 'test2', NULL, 0, '2023-05-12 08:10:09', '2023-05-15 03:50:40', 0);
 ```
 
 ScheduledConfig.java
 
 ```java
+package org.xxx.admin.config;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -156,12 +160,14 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
-
 /**
  * <p>定时任务线程池</p>
  *
  * @ClassName ScheduledConfig
  * @Description 定时任务线程池
+ * @Author zhaohongliang
+ * @Date 2022-11-30 21:34
+ * @Since 1.0
  */
 @Slf4j
 @EnableAsync
@@ -170,44 +176,45 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 public class ScheduledConfig implements SchedulingConfigurer {
 
     @Autowired
-    @Qualifier("taskScheduler")
     private ThreadPoolTaskScheduler taskScheduler;
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.setTaskScheduler(taskScheduler);
+    }
 
     /**
      * 定时任务线程池
      *
      * @return
      */
-    @Bean("taskScheduler")
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+    @Bean
+    public ThreadPoolTaskScheduler taskScheduler() {
         log.info("Creating ThreadPoolTaskScheduler ...");
-        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(20);
-        threadPoolTaskScheduler.setThreadNamePrefix("TaskExecutor-");
-        threadPoolTaskScheduler.setWaitForTasksToCompleteOnShutdown(true);
-        threadPoolTaskScheduler.setAwaitTerminationSeconds(60);
+        ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
+        taskScheduler.setPoolSize(20);
+        taskScheduler.setThreadNamePrefix("TaskExecutor-");
+        taskScheduler.setWaitForTasksToCompleteOnShutdown(true);
+        taskScheduler.setAwaitTerminationSeconds(60);
         log.info("Successfully started");
-        return threadPoolTaskScheduler;
+        return taskScheduler;
     }
 
-    @Override
-    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        taskRegistrar.setTaskScheduler(taskScheduler);
-    }
 }
-
 ```
 
 CronTaskRegistrar.java
 
 ``` java
+package org.xxx.admin.task;
+
 import lombok.extern.slf4j.Slf4j;
-import org.dwt.admin.context.SpringContext;
-import org.dwt.admin.entity.task.TaskPO;
-import org.dwt.admin.repository.TaskRepository;
-import org.dwt.admin.utils.StringUtil;
+import org.xxx.admin.context.SpringContext;
+import org.xxx.admin.entity.task.TaskPO;
+import org.xxx.admin.repository.TaskRepository;
+import org.xxx.admin.utils.StringUtil;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
@@ -224,24 +231,37 @@ import java.util.concurrent.ScheduledFuture;
  *
  * @ClassName CronTaskRegistrar
  * @Description 动态添加定时任务
+ * @Author zhaohongliang
+ * @Date 2023-05-04 11:01
+ * @Since 1.0
  */
 @Slf4j
 @Component
-public class CronTaskRegistrar {
+public class CronTaskRegistrar implements InitializingBean {
 
     /**
      * 正在运行的任务
      */
     private final Map<String, ScheduledFuture<?>> scheduledFutureMap = new ConcurrentHashMap<>(16);
 
+    public Map<String, ScheduledFuture<?>> getScheduledFutureMap() {
+        return scheduledFutureMap;
+    }
 
     @Autowired
-    @Qualifier("taskScheduler")
     private ThreadPoolTaskScheduler taskScheduler;
 
     @Autowired
     private TaskRepository taskRepository;
 
+    /**
+     * 执行任务
+     *
+     * @param runnable
+     */
+    public void executeCronTask(Runnable runnable) {
+        runnable.run();
+    }
 
     /**
      * 添加任务
@@ -253,7 +273,6 @@ public class CronTaskRegistrar {
     public void addCronTask(String taskId, Runnable runnable, String cornExpression) {
         ScheduledFuture<?> scheduledFuture = taskScheduler.schedule(runnable, new CronTrigger(cornExpression));
         scheduledFutureMap.put(taskId, scheduledFuture);
-
     }
 
     /**
@@ -269,10 +288,16 @@ public class CronTaskRegistrar {
     }
 
     /**
-     * 初始化任务
+     * 注册任务
      */
-    public void initCronTask() {
+    public void registerCronTask() {
         scheduledFutureMap.clear();
+
+        // 监测线程
+        MoniterRunable moniterRunable = new MoniterRunable(this);
+        ScheduledFuture<?> moniterScheduledFuture = taskScheduler.schedule(moniterRunable, new CronTrigger("0 0 * * * ?"));
+        scheduledFutureMap.put("0", moniterScheduledFuture);
+
         List<TaskPO> tasks = taskRepository.listTask();
         if (CollectionUtils.isEmpty(tasks)) {
             return;
@@ -288,51 +313,81 @@ public class CronTaskRegistrar {
                 bean = SpringContext.getBean(beanName);
                 method = clazz.getMethod(task.getMethodName());
             } catch (ClassNotFoundException e) {
-                log.error("启动 {} 任务失败，原因：找不到 {} 类，异常信息：{}", task.getName(),  task.getClassName(), e.getMessage());
+                log.error("启动【{}】任务失败，原因：找不到 {} 类，异常信息：{}", task.getName(),  task.getClassName(), e.getMessage());
                 e.printStackTrace();
             } catch (NoSuchMethodException e) {
-                log.error("启动 {} 任务失败，原因：找不到 {} 方法，异常信息：{}", task.getName(), task.getMethodName(), e.getMessage());
+                log.error("启动【{}】任务失败，原因：找不到 {} 方法，异常信息：{}", task.getName(), task.getMethodName(), e.getMessage());
                 e.printStackTrace();
             }
-            TaskRunnable taskRunnable = new TaskRunnable(task.getName(), bean, method);
-            ScheduledFuture<?> scheduledFuture = taskScheduler.schedule(taskRunnable, new CronTrigger(task.getCornExpression()));
-            scheduledFutureMap.put(task.getId().toString(), scheduledFuture);
+            if (bean != null && method != null ) {
+                TaskRunnable taskRunnable = new TaskRunnable(task.getName(), task.getCornExpression(), bean, method);
+                this.addCronTask(task.getId().toString(), taskRunnable, task.getCornExpression());
+            }
         }) ;
+
+    }
+
+    /**
+     * 初始化完bean执行
+     */
+    @Override
+    public void afterPropertiesSet() {
+        log.info("任务调度器开始执行...");
+        this.registerCronTask();
+        if (!CollectionUtils.isEmpty(scheduledFutureMap)) {
+            scheduledFutureMap.forEach((k, v) -> {
+                log.info("register taskId {} complete...", k);
+            }) ;
+        }
 
     }
 
 }
 ```
 
-TaskListener.java
+MoniterRunnable.java
 
-```java
+``` java
+package org.xxx.admin.task;
+
 import lombok.extern.slf4j.Slf4j;
-import org.dwt.admin.task.CronTaskRegistrar;
+import org.xxx.admin.context.SpringContext;
+import org.xxx.admin.exception.BusinessException;
+import org.xxx.admin.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 /**
- * <p>监听器</p>
+ * <p>监测线程</p>
  *
- * @ClassName MyListener
- * @Description 监听器
+ * @ClassName MoniterRunable
+ * @Description 监测线程
+ * @Author zhaohongliang
+ * @Date 2023-05-04 20:04
+ * @Since 1.0
  */
 @Slf4j
-@Component
-public class TaskListener implements ApplicationListener<ApplicationStartedEvent> {
+public class MoniterRunable implements Runnable {
 
-    @Autowired
-    private CronTaskRegistrar cronTaskRegistrar;
 
+    private final CronTaskRegistrar cronTaskRegistrar;
+
+    public MoniterRunable(CronTaskRegistrar cronTaskRegistrar) {
+        this.cronTaskRegistrar = cronTaskRegistrar;
+    }
 
     @Override
-    public void onApplicationEvent(ApplicationStartedEvent event) {
-        log.info("任务调度器开始执行....");
-        cronTaskRegistrar.initCronTask();
+    public void run() {
+        Map<String, ScheduledFuture<?>> scheduledFutureMap = cronTaskRegistrar.getScheduledFutureMap();
+        scheduledFutureMap.forEach((k, v) -> {
+            // TODO 发送预警
+            log.info("register taskId {} run...", k);
+        });
     }
+
 }
 
 ```
@@ -342,30 +397,41 @@ public class TaskListener implements ApplicationListener<ApplicationStartedEvent
 TaskRunnable.java
 
 ``` java
+package org.xxx.admin.task;
+
 import lombok.extern.slf4j.Slf4j;
-import org.dwt.admin.exception.BusinessException;
-import org.dwt.admin.utils.DateUtil;
+import org.xxx.admin.utils.DateUtil;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.scheduling.support.SimpleTriggerContext;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * <p>线程</p>
  *
  * @ClassName TaskRunnable
  * @Description 线程
+ * @Author zhaohongliang
+ * @Date 2023-05-04 11:30
+ * @Since 1.0
  */
 @Slf4j
 public class TaskRunnable implements Runnable {
 
     private final String taskName;
 
+    private final String cornExpression;
+
     private final Object bean;
 
     private final Method method;
 
-    public TaskRunnable(String taskName, Object bean, Method method) {
+    public TaskRunnable(String taskName, String cornExpression, Object bean, Method method) {
         this.taskName = taskName;
+        this.cornExpression = cornExpression;
         this.bean = bean;
         this.method = method;
     }
@@ -373,27 +439,36 @@ public class TaskRunnable implements Runnable {
     // @SneakyThrows
     @Override
     public void run() {
-        log.info("TaskRunnable:{}", DateUtil.getDateTime(LocalDateTime.now()));
+        LocalDateTime startTime = LocalDateTime.now();
         try {
             method.invoke(bean);
         } catch (Exception e) {
-            log.error("任务 {} 执行失败,异常信息：{}", taskName, e.getMessage());
+            log.error("任务【{}】执行失败,异常信息：{}", taskName, e.getMessage());
             e.printStackTrace();
         }
+        LocalDateTime endTime = LocalDateTime.now();
+        Duration duration = Duration.between(startTime, endTime);
+        Date nextTime = new CronTrigger(this.cornExpression).nextExecutionTime(new SimpleTriggerContext());
+        log.info("任务【{}】执行完毕!", taskName);
+        log.info("开始时间：{}", startTime);
+        log.info("结束时间：{}", endTime);
+        log.info("执行耗时：{}ms", duration.toMillis());
+        log.info("下次执行时间：{}", DateUtil.getLocalDateTime(nextTime));
 
     }
+
 }
 ```
 
 TaskRepositoryImpl.java
 
 ``` java
-package org.dwt.admin.repository.impl;
+package org.xxx.admin.repository.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.dwt.admin.dao.TaskDao;
-import org.dwt.admin.entity.task.TaskPO;
-import org.dwt.admin.repository.TaskRepository;
+import org.xxx.admin.dao.TaskDao;
+import org.xxx.admin.entity.task.TaskPO;
+import org.xxx.admin.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -494,17 +569,19 @@ public class TaskRepositoryImpl implements TaskRepository {
 TaskServiceImpl.java
 
 ```java
+package org.xxx.admin.service.impl;
+
 import lombok.extern.slf4j.Slf4j;
-import org.dwt.admin.context.ResultEntity;
-import org.dwt.admin.context.SpringContext;
-import org.dwt.admin.entity.task.TaskAO;
-import org.dwt.admin.entity.task.TaskPO;
-import org.dwt.admin.exception.BusinessException;
-import org.dwt.admin.repository.TaskRepository;
-import org.dwt.admin.service.TaskService;
-import org.dwt.admin.task.CronTaskRegistrar;
-import org.dwt.admin.task.TaskRunnable;
-import org.dwt.admin.utils.StringUtil;
+import org.xxx.admin.context.ResultEntity;
+import org.xxx.admin.context.SpringContext;
+import org.xxx.admin.entity.task.TaskAO;
+import org.xxx.admin.entity.task.TaskPO;
+import org.xxx.admin.exception.BusinessException;
+import org.xxx.admin.repository.TaskRepository;
+import org.xxx.admin.service.TaskService;
+import org.xxx.admin.task.CronTaskRegistrar;
+import org.xxx.admin.task.TaskRunnable;
+import org.xxx.admin.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -516,6 +593,9 @@ import java.util.Optional;
  *
  * @ClassName TaskServiceImpl
  * @Description 定时任务
+ * @Author zhaohongliang
+ * @Date 2023-05-04 15:24
+ * @Since 1.0
  */
 @Slf4j
 @Service
@@ -586,6 +666,38 @@ public class TaskServiceImpl implements TaskService {
     }
 
     /**
+     * 执行定时任务
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    @SuppressWarnings("rawtypes")
+    public ResultEntity executeTask(Long id) {
+        TaskPO taskPO = taskRepository.getById(id);
+        Optional.ofNullable(taskPO).orElseThrow(() -> new BusinessException("此定时任务不存在"));
+        Class<?> clazz = null;
+        Object bean = null;
+        Method method = null;
+        try {
+            clazz = Class.forName(taskPO.getClassName());
+            String beanName = StringUtil.toLowerFirstCase(clazz.getSimpleName());
+            bean = SpringContext.getBean(beanName);
+            method = clazz.getMethod(taskPO.getMethodName());
+        } catch (ClassNotFoundException e) {
+            log.error("启动 {} 任务失败，原因：找不到 {} 类，异常信息：{}", taskPO.getName(),  taskPO.getClassName(), e.getMessage());
+            throw new BusinessException("启动 " + taskPO.getName() + " 任务失败，原因：找不到" + taskPO.getClassName() + "类");
+        } catch (NoSuchMethodException e) {
+            log.error("启动 {} 任务失败，原因：找不到 {} 方法，异常信息：{}", taskPO.getName(), taskPO.getMethodName(), e.getMessage());
+            throw new BusinessException("启动 " + taskPO.getName() + " 任务失败，原因：找不到" + taskPO.getMethodName() + "方法");
+        }
+        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), taskPO.getCornExpression(), bean, method);
+        cronTaskRegistrar.executeCronTask(taskRunnable);
+
+        return ResultEntity.success();
+    }
+
+    /**
      * 启动定时任务
      *
      * @param id
@@ -611,7 +723,7 @@ public class TaskServiceImpl implements TaskService {
             log.error("启动 {} 任务失败，原因：找不到 {} 方法，异常信息：{}", taskPO.getName(), taskPO.getMethodName(), e.getMessage());
             throw new BusinessException("启动 " + taskPO.getName() + " 任务失败，原因：找不到" + taskPO.getMethodName() + "方法");
         }
-        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), bean, method);
+        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), taskPO.getCornExpression(), bean, method);
         cronTaskRegistrar.addCronTask(taskPO.getId().toString(), taskRunnable, taskPO.getCornExpression());
 
         return ResultEntity.success();
@@ -660,11 +772,13 @@ public class XxxServiceImpl implements XxxService {
 TaskController.java
 
 ``` java
-import org.dwt.admin.annotation.ApiVersion;
-import org.dwt.admin.context.ResultEntity;
-import org.dwt.admin.context.ValidGroup;
-import org.dwt.admin.entity.task.TaskAO;
-import org.dwt.admin.service.TaskService;
+package org.xxx.admin.controller;
+
+import org.xxx.admin.annotation.ApiVersion;
+import org.xxx.admin.context.ResultEntity;
+import org.xxx.admin.context.ValidGroup;
+import org.xxx.admin.entity.task.TaskAO;
+import org.xxx.admin.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -683,6 +797,9 @@ import javax.validation.constraints.NotNull;
  *
  * @ClassName TaskController
  * @Description 定时任务
+ * @Author zhaohongliang
+ * @Date 2023-05-04 13:58
+ * @Since 1.0
  */
 @Validated
 @ApiVersion
@@ -730,6 +847,18 @@ public class TaskController {
     }
 
     /**
+     * 执行定时任务
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/execute")
+    @SuppressWarnings("rawtypes")
+    public ResultEntity executeTask(@NotNull @RequestParam Long id) {
+        return taskService.executeTask(id);
+    }
+
+    /**
      * 启动定时任务
      *
      * @param id
@@ -751,6 +880,7 @@ public class TaskController {
     public ResultEntity stopTask(@NotNull @RequestParam Long id) {
         return taskService.stopTask(id);
     }
+
 
 
 }
