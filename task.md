@@ -452,11 +452,7 @@ public class TaskRunnable implements Runnable {
         LocalDateTime endTime = LocalDateTime.now();
         Duration duration = Duration.between(startTime, endTime);
         Date nextTime = new CronTrigger(this.cornExpression).nextExecutionTime(new SimpleTriggerContext());
-        log.info("任务【{}】执行完毕!", taskName);
-        log.info("开始时间：{}", startTime);
-        log.info("结束时间：{}", endTime);
-        log.info("执行耗时：{}ms", duration.toMillis());
-        log.info("下次执行时间：{}", DateUtil.getLocalDateTime(nextTime));
+        log.info("【{}】执行完毕，开始时间：{}，结束时间：{}，执行耗时：{} ms，下次执行时间：{}", taskName, startTime, endTime, duration.toMillis(), DateUtil.getLocalDateTime(nextTime));
 
     }
 
