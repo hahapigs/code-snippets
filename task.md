@@ -283,7 +283,10 @@ public class CronTaskRegistrar implements InitializingBean {
     public void removeCronTask(String taskId) {
         ScheduledFuture<?> scheduledFuture = scheduledFutureMap.remove(taskId);
         if (scheduledFuture != null) {
-            scheduledFuture.cancel(true);
+          	if (scheduledFuture) {
+                return;
+            }
+        	  scheduledFuture.cancel(true);
         }
     }
 
