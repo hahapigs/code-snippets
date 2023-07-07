@@ -120,7 +120,7 @@ mysql
 
 ``` mysql
 -- 删除旧表
-DROP TABLE `task_base` if EXISTS;
+DROP TABLE IF EXISTS `task_base`;
 -- 创建新表
 CREATE TABLE `task_base` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -134,10 +134,10 @@ CREATE TABLE `task_base` (
   `is_disabled` bigint DEFAULT '0' COMMENT '是否禁用, 0:否 1:是',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  `is_deleted` tinyint DEFAULT '0' COMMENT '是否删除 0:否 1:是',
+  `is_deleted` tinyint DEFAULT '0' COMMENT '是否删除 0:否 非0:是',
   PRIMARY KEY (`id`),
   UNIQUE KEY `udx_multi_1` (`name`,`is_deleted`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务';
 
 -- 插入数据
 INSERT INTO `task_base` (`id`, `name`, `name_en`, `description`, `corn_expression`, `class_name`, `method_name`, `method_params`, `is_disabled`, `create_time`, `update_time`, `is_deleted`) VALUES
@@ -268,10 +268,10 @@ public class CronTaskRegistrar implements InitializingBean {
      *
      * @param taskId
      * @param runnable
-     * @param cornExpression
+     * @param cronExpression
      */
-    public void addCronTask(String taskId, Runnable runnable, String cornExpression) {
-        ScheduledFuture<?> scheduledFuture = taskScheduler.schedule(runnable, new CronTrigger(cornExpression));
+    public void addCronTask(String taskId, Runnable runnable, String cronExpression) {
+        ScheduledFuture<?> scheduledFuture = taskScheduler.schedule(runnable, new CronTrigger(cronExpression));
         scheduledFutureMap.put(taskId, scheduledFuture);
     }
 
@@ -323,8 +323,8 @@ public class CronTaskRegistrar implements InitializingBean {
                 e.printStackTrace();
             }
             if (bean != null && method != null ) {
-                TaskRunnable taskRunnable = new TaskRunnable(task.getName(), task.getCornExpression(), bean, method);
-                this.addCronTask(task.getId().toString(), taskRunnable, task.getCornExpression());
+                TaskRunnable taskRunnable = new TaskRunnable(task.getName(), task.getCronExpression(), bean, method);
+                this.addCronTask(task.getId().toString(), taskRunnable, task.getCronExpression());
             }
         }) ;
 
@@ -426,15 +426,15 @@ public class TaskRunnable implements Runnable {
 
     private final String taskName;
 
-    private final String cornExpression;
+    private final String cronExpression;
 
     private final Object bean;
 
     private final Method method;
 
-    public TaskRunnable(String taskName, String cornExpression, Object bean, Method method) {
+    public TaskRunnable(String taskName, String cronExpression, Object bean, Method method) {
         this.taskName = taskName;
-        this.cornExpression = cornExpression;
+        this.cronExpression = cronExpression;
         this.bean = bean;
         this.method = method;
     }
@@ -451,7 +451,7 @@ public class TaskRunnable implements Runnable {
         }
         LocalDateTime endTime = LocalDateTime.now();
         Duration duration = Duration.between(startTime, endTime);
-        Date nextTime = new CronTrigger(this.cornExpression).nextExecutionTime(new SimpleTriggerContext());
+        Date nextTime = new CronTrigger(this.cronExpression).nextExecutionTime(new SimpleTriggerContext());
         log.info("【{}】执行完毕，开始时间：{}，结束时间：{}，执行耗时：{} ms，下次执行时间：{}", taskName, startTime, endTime, duration.toMillis(), DateUtil.getLocalDateTime(nextTime));
 
     }
@@ -690,7 +690,7 @@ public class TaskServiceImpl implements TaskService {
             log.error("启动 {} 任务失败，原因：找不到 {} 方法，异常信息：{}", taskPO.getName(), taskPO.getMethodName(), e.getMessage());
             throw new BusinessException("启动 " + taskPO.getName() + " 任务失败，原因：找不到" + taskPO.getMethodName() + "方法");
         }
-        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), taskPO.getCornExpression(), bean, method);
+        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), taskPO.getCronExpression(), bean, method);
         cronTaskRegistrar.executeCronTask(taskRunnable);
 
         return ResultEntity.success();
@@ -722,8 +722,8 @@ public class TaskServiceImpl implements TaskService {
             log.error("启动 {} 任务失败，原因：找不到 {} 方法，异常信息：{}", taskPO.getName(), taskPO.getMethodName(), e.getMessage());
             throw new BusinessException("启动 " + taskPO.getName() + " 任务失败，原因：找不到" + taskPO.getMethodName() + "方法");
         }
-        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), taskPO.getCornExpression(), bean, method);
-        cronTaskRegistrar.addCronTask(taskPO.getId().toString(), taskRunnable, taskPO.getCornExpression());
+        TaskRunnable taskRunnable = new TaskRunnable(taskPO.getName(), taskPO.getCronExpression(), bean, method);
+        cronTaskRegistrar.addCronTask(taskPO.getId().toString(), taskRunnable, taskPO.getCronExpression());
 
         return ResultEntity.success();
     }
