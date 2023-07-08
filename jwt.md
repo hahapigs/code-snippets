@@ -1,5 +1,7 @@
 ## Jwt token
 
+Jwt token 无状态工具类实现，有状态形式可以配合redis实现
+
 #### maven
 
 ``` xml
