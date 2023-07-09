@@ -233,3 +233,4 @@ public class JwtUtils {
 
 ```
 
+注意：为了提升代码质量和安全，TOKEN_SECRET 和 AVAILABLE_TIME 不应该以常量形式出现在工具类中，应该是以配置为内容读取的实参传入对应方法的形参，由于此处只做演示用途，暂时忽略
