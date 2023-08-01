@@ -300,7 +300,7 @@ logback-spring.xml
 
     <!-- 开发和测试环境:打印控制台 -->
     <springProfile name="dev | test">
-        <logger name="com.example.canary" level="INFO" additivity="false">
+        <logger name="com.example.canary" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE" />
             <appender-ref ref="ALL_FILE" />
         </logger>
