@@ -115,6 +115,7 @@ public class SpringContext implements ApplicationContextAware {
     /**
      * application context
      */
+  	@Getter
     private static ApplicationContext context;
 
     /**
