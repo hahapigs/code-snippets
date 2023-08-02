@@ -58,6 +58,7 @@ spring:
 
 ```powershell
 $ cat ./canary.pid | xargs kill
+$ kill $(cat ./canary.pid )
 ```
 
 #### 方式三：监听服务 pid，通过 kill 方式关闭服务（代码配置）
@@ -90,6 +91,7 @@ spring:
 
 ```powershell
 $ cat ./canary.pid | xargs kill
+$ kill $(cat ./canary.pid )
 ```
 
 #### 方式四：通过 ApplicationContext.close() 关闭服务
