@@ -147,14 +147,11 @@ public class SpringContext implements ApplicationContextAware {
 
 ```
 
-CanaryApplication.java
+SystemController.java
 
 ``` java
-@SpringBootApplication
-public class CanaryApplication {
-	public static void main(String[] args) {
-		SpringApplication.run(CanaryApplication.class, args);
-	}
+@RestController
+public class SystemController {
   
   /**
 	 * 停止服务
@@ -164,5 +161,45 @@ public class CanaryApplication {
     ((ConfigurableApplicationContex) SpringContext.getConext()).close();
   }
 }
+```
+
+命令
+
+``` powershell
+# httpie
+$ http post http://localhost:8080/shutdown
+# curl
+$ curl -X post http://localhost:8080/shutdown
+```
+
+#### 方式五：通过 ApplicationContext.exit() 关闭服务
+
+通过 ApplicationContext 向 JVM 注册一个 shutdown 的钩子来确保服务的正常关闭
+
+SystemController.java
+
+``` java
+@RestController
+public class SystemController {
+  
+  @Autowired
+  
+  /**
+	 * 停止服务
+	 */
+  @PostMapping("/shutdown")
+  public void shutdown() {
+    System.exit(SpringApplication.exit(SpringContext.getContext(), () -> 42))
+  }
+}
+```
+
+命令
+
+``` powershell
+# httpie
+$ http post http://localhost:8080/shutdown
+# curl
+$ curl -X post http://localhost:8080/shutdown
 ```
 
